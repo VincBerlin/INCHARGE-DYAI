@@ -44,13 +44,6 @@ module.exports = async function handler(req, res) {
     res.setHeader('Allow', ['POST']);
     return res.status(405).json({ error: 'Method not allowed' });
   }
-
-  if (!process.env.IP_HASH_SECRET) {
-    return res.status(500).json({
-      error: 'Missing IP_HASH_SECRET environment variable',
-    });
-  }
-
   try {
     let body = req.body || {};
     if (typeof body === 'string') {
@@ -70,7 +63,7 @@ module.exports = async function handler(req, res) {
       projectName: body.projectName || 'INCHARGE EMS Studio Website',
       confirmed: true,
       acceptedAt: now,
-      ipHash: sha256(`${ip}:${process.env.IP_HASH_SECRET}`),
+      ipHash: process.env.IP_HASH_SECRET ? sha256(`${ip}:${process.env.IP_HASH_SECRET}`) : null,
       userAgent: req.headers['user-agent'] || 'unknown',
       termsVersion: body.termsVersion || DEFAULT_TERMS_VERSION,
       acceptedTextHash: sha256(confirmationText),

@@ -894,39 +894,46 @@
     status.textContent = '';
   });
 
-  button.addEventListener('click', async function(){
+  async function storeConfirmation(payload){
+    const response = await fetch('/api/copyright-confirmation', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+      keepalive: true
+    });
+
+    if(!response.ok){
+      throw new Error('Die Bestätigung konnte nicht gespeichert werden.');
+    }
+  }
+
+  function finalizeConfirmation(){
+    localStorage.setItem(STORAGE_KEY, 'true');
+    modal.hidden = true;
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
+
+  button.addEventListener('click', function(){
     if(!checkbox.checked) return;
 
     button.disabled = true;
-    button.textContent = 'Bestätigung wird gespeichert...';
+    button.textContent = 'Website wird geöffnet...';
     status.textContent = '';
 
-    try{
-      const response = await fetch('/api/copyright-confirmation', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          confirmed: true,
-          termsVersion: TERMS_VERSION,
-          confirmationText: textEl.textContent.trim(),
-          pageUrl: window.location.href,
-          projectName: 'INCHARGE EMS Studio Website'
-        })
-      });
+    const payload = {
+      confirmed: true,
+      termsVersion: TERMS_VERSION,
+      confirmationText: textEl.textContent.trim(),
+      pageUrl: window.location.href,
+      projectName: 'INCHARGE EMS Studio Website'
+    };
 
-      if(!response.ok){
-        throw new Error('Die Bestätigung konnte nicht gespeichert werden.');
-      }
+    finalizeConfirmation();
 
-      localStorage.setItem(STORAGE_KEY, 'true');
-      modal.hidden = true;
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-    }catch(error){
-      status.textContent = 'Die Bestätigung konnte nicht gespeichert werden. Bitte erneut versuchen oder den Betreiber kontaktieren.';
-      button.disabled = false;
-      button.textContent = 'Bestätigen und Website öffnen';
-    }
+    storeConfirmation(payload).catch(function(error){
+      console.warn('Rechtebestätigung konnte serverseitig nicht gespeichert werden:', error);
+    });
   });
 })();
 </script>
